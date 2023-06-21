@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Enviar mensaje a Telegram</title>
+</head>
+
+<style>
+  /* Estilos para el formulario */
+  #myForm {
+    width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  input[type="submit"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  input[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+</style>
+
+<body>
+  <form id="myForm">
+    <label for="message">Mensaje:</label>
+    <input type="text" id="message" name="message" required>
+    <br>
+    <input type="submit" value="Enviar">
+  </form>
+
+  <script>
+    async function enviarMensaje(event) {
+      event.preventDefault();
+
+      const message = document.getElementById("message").value;
+
+      try {
+        const chatIdsResponse = await fetch("chatIds.txt");
+        const chatIdsText = await chatIdsResponse.text();
+        const chatIds = chatIdsText.trim().split("\n");
+
+        const configResponse = await fetch("config.txt");
+        const configText = await configResponse.text();
+        const token = configText.trim();
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+        for (const chatId of chatIds) {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: message
+            })
+          });
+
+          if (response.ok) {
+            console.log(`Mensaje enviado exitosamente a chat ID: ${chatId}`);
+          } else {
+            console.error(`Error al enviar el mensaje a chat ID: ${chatId}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error de red:", error);
+      }
+    }
+
+    document.getElementById("myForm").addEventListener("submit", enviarMensaje);
+  </script>
+</body>
+</html>
