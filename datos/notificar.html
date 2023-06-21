@@ -64,7 +64,7 @@
         const chatIdsText = await chatIdsResponse.text();
         const chatIds = chatIdsText.trim().split("\n");
 
-        const configResponse = await fetch("config.txt");
+        const configResponse = await fetch("config2.txt");
         const configText = await configResponse.text();
         const token = configText.trim();
 
