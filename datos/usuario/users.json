@@ -1,0 +1,12 @@
+[
+  {
+    "usuario": "admin",
+    "contrasena": "1234",
+    "token": "abc123"
+  },
+  {
+    "usuario": "luishino",
+    "contrasena": "hacksecure",
+    "token": "tok456"
+  }
+]
