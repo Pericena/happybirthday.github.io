@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Dashboard Profesional</title>
+<title>Bot SOC Dashboard Simulación</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
@@ -27,11 +27,11 @@ body { background-color: #F8FAFC; color: #1E293B; }
     </header>
 
     <div id="chatBox" class="flex-1 overflow-y-auto scrollbar-thin p-4 rounded-xl space-y-3 bg-white">
-      <div class="bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800">¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
+      <div class="bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800">¡Hola! Pregunta sobre incidentes, riesgos o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
     </div>
 
     <div class="mt-4 flex gap-2">
-      <input id="question" type="text" placeholder="Ej: ¿Qué hacer ante fuga de datos?" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      <input id="question" type="text" placeholder="Ej: Fuga de datos de clientes" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
       <button id="askBtn" class="px-4 py-3 rounded-xl bg-blue-500 text-white font-semibold hover:scale-[1.02] transition">Consultar</button>
     </div>
   </div>
@@ -129,33 +129,26 @@ function renderHistory(){
   });
 }
 
+// Simulación de respuesta con varias etiquetas automáticas
 function simulateResponse(question){
   const frags = MOCK_FRAGMENTS.slice().sort((a,b)=>b.embScore-a.embScore).slice(0,3);
   const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
-  
-  // Generación de etiquetas automáticas
-  const types = ["Incidente", "Control", "Política", "Vulnerabilidad"];
-  const risks = ["Crítico", "Moderado", "Bajo"];
-  const quickResponses = ["Prioriza contención inmediata", "Revisa controles", "Documenta evidencia"];
-  const typeTag = types[Math.floor(Math.random()*types.length)];
-  const riskTag = risks[Math.floor(Math.random()*risks.length)];
-  const quick = quickResponses[Math.floor(Math.random()*quickResponses.length)];
+
+  // Etiquetas automáticas tipo IA
+  const autoTags = ['Incidente', 'Control', 'Riesgo', 'Política', 'Alta Prioridad'];
+  const selectedTags = autoTags.slice(0,3); // selecciona 3 por ejemplo
+
+  const recommendations = "Recomendación: Prioriza la contención rápida, notifica a Compliance, audita accesos y documenta evidencia. Evalúa criticidad y seguimiento.";
 
   const botDiv = document.createElement('div');
   botDiv.className = "bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800";
-  botDiv.innerHTML = `
-    <div><strong>Confianza:</strong> ${avgScore}%</div>
-    <div class="flex flex-wrap gap-2 my-1">
-      <span class="tag bg-red-500">${typeTag}</span>
-      <span class="tag bg-yellow-400">${riskTag}</span>
-      <span class="tag bg-green-400">${quick}</span>
-    </div>
-    <div>Recomendación: Prioriza la contención rápida, notifica a Compliance y documenta evidencia.</div>
-  `;
+  botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>
+  <div class="flex flex-wrap gap-1 my-1">${selectedTags.map(t=>`<span class="tag bg-blue-400">${t}</span>`).join('')}</div>
+  <div>${recommendations}</div>`;
   chatBox.appendChild(botDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  HISTORY.unshift({q: question, tag: typeTag, conf: avgScore});
+  HISTORY.unshift({q: question, tag: selectedTags.join(','), conf: avgScore});
   renderHistory();
   renderFragments(frags);
 }
