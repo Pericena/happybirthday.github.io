@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Dashboard Claro</title>
+<title>Bot SOC Dashboard Claro - MVP</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
@@ -27,7 +27,9 @@ body { background-color: #F8FAFC; color: #1E293B; }
     </header>
 
     <div id="chatBox" class="flex-1 overflow-y-auto scrollbar-thin p-4 rounded-xl space-y-3 bg-white">
-      <div class="bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800">¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
+      <div class="bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800">
+        ¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con respaldo de documentos y % confianza.
+      </div>
     </div>
 
     <div class="mt-4 flex gap-2">
@@ -129,13 +131,23 @@ function renderHistory(){
   });
 }
 
+// Función para simular varias respuestas rápidas
 function simulateResponse(question){
   const frags = MOCK_FRAGMENTS.slice().sort((a,b)=>b.embScore-a.embScore).slice(0,3);
   const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
-  const recommendations = "Recomendación: Prioriza la contención rápida, notifica a Compliance y documenta evidencia. Evalúa la criticidad y seguimiento.";
+
+  const recommendations = "Recomendación: Prioriza la contención rápida, notifica a Compliance y documenta evidencia. Evalúa criticidad y seguimiento.";
+  const risk = getPriority(avgScore);
+
   const botDiv = document.createElement('div');
   botDiv.className = "bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800";
-  botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>${recommendations}`;
+  botDiv.innerHTML = `
+    <div class="flex items-center justify-between mb-1">
+      <strong>Confianza:</strong> ${avgScore}%
+      <span class="tag ${risk.color}">${risk.text}</span>
+    </div>
+    <div>${recommendations}</div>
+  `;
   chatBox.appendChild(botDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -144,6 +156,7 @@ function simulateResponse(question){
   renderFragments(frags);
 }
 
+// Evento de enviar pregunta
 askBtn.addEventListener('click',()=>{
   const q = questionInput.value.trim();
   if(!q) return alert("Escribe tu pregunta.");
