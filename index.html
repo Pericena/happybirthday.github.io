@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Profesional UX/UI</title>
+<title>Bot SOC Dashboard Profesional</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
 body { background-color: #0A1F44; color: #ffffff; }
 .glass { background: rgba(30,58,138,0.7); backdrop-filter: blur(12px); }
 .tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; cursor: default; }
-pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
 .tab-active { border-bottom: 3px solid #3B82F6; font-weight: 600; }
 .scrollbar-thin::-webkit-scrollbar { width: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgba(59,130,246,0.6); border-radius: 3px; }
@@ -20,7 +19,7 @@ pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto 
 
 <div class="min-h-screen flex flex-col md:flex-row p-4 gap-4">
 
-  <!-- Chat panel -->
+  <!-- Panel Chat -->
   <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col max-h-[90vh]">
     <header class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-semibold text-white">Bot SOC</h1>
@@ -37,7 +36,7 @@ pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto 
     </div>
   </div>
 
-  <!-- Panel derecho: tabs -->
+  <!-- Panel derecho con tabs -->
   <div class="w-full md:w-1/3 glass rounded-2xl p-4 shadow-lg border border-white/10 max-h-[90vh] flex flex-col">
     
     <!-- Tabs -->
@@ -87,9 +86,16 @@ const MOCK_FRAGMENTS = [
 
 const HISTORY = [];
 
+function getPriority(score){
+  if(score>=85) return {text:'Alta', color:'bg-red-500'};
+  if(score>=65) return {text:'Media', color:'bg-yellow-400'};
+  return {text:'Baja', color:'bg-green-400'};
+}
+
 function renderFragments(frags){
   fragList.innerHTML = "";
   frags.forEach(f=>{
+    const prio = getPriority(f.embScore*100);
     const div = document.createElement('div');
     div.className = "p-3 bg-[#1E3A8A] rounded-lg border border-white/10 text-sm hover:shadow-lg hover:bg-[#2C4A9B] transition relative";
     const color = f.tag==='Incidente'?'bg-red-500':f.tag==='Política'?'bg-[#3B82F6]':'bg-indigo-400';
@@ -101,12 +107,13 @@ function renderFragments(frags){
       <div class="text-white mb-2">${f.snippet}</div>
       <div class="flex items-center justify-between text-xs text-[#E5E5E5]">
         <span>Score: ${Math.round(f.embScore*100)}%</span>
-        <button class="copyBtn text-white/70 hover:text-white"><i class='bx bx-copy'></i></button>
+        <div class="flex gap-2">
+          <span class="tag ${prio.color}">${prio.text}</span>
+          <button class="copyBtn text-white/70 hover:text-white"><i class='bx bx-copy'></i></button>
+        </div>
       </div>
     `;
     fragList.appendChild(div);
-
-    // Copiar al portapapeles
     div.querySelector('.copyBtn').addEventListener('click',()=>navigator.clipboard.writeText(f.snippet));
   });
 }
@@ -114,9 +121,10 @@ function renderFragments(frags){
 function renderHistory(){
   historyEl.innerHTML = "";
   HISTORY.slice(0,6).forEach(h=>{
+    const prio = getPriority(h.conf);
     const div = document.createElement('div');
     div.className = "p-2 bg-[#1E3A8A] rounded flex items-center justify-between text-sm hover:shadow-md transition";
-    div.innerHTML = `<div>${h.q}<br><span class="text-xs text-[#E5E5E5]">${h.tag}</span></div><div class="font-semibold">${h.conf}%</div>`;
+    div.innerHTML = `<div>${h.q}<br><span class="text-xs text-[#E5E5E5]">${h.tag}</span></div><div class="flex items-center gap-2"><span class="font-semibold">${h.conf}%</span><span class="tag ${prio.color}">${prio.text}</span></div>`;
     historyEl.appendChild(div);
   });
 }
