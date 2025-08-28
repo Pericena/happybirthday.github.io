@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Demo</title>
+<title>Bot SOC Profesional</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
-  body { background-color: #003366; color: #ffffff; }
-  .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
-  .tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
-  pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
+body { background-color: #003366; color: #ffffff; }
+.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
+.tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
+.tab-active { border-bottom: 2px solid #0096D6; font-weight: 600; }
 </style>
 </head>
 <body class="antialiased">
@@ -34,26 +35,39 @@
     </div>
   </div>
 
-  <!-- Panel derecho: fragmentos y historial -->
-  <div class="w-full md:w-1/3 glass rounded-2xl p-6 shadow-lg border border-white/10 max-h-[90vh] flex flex-col">
-    <h3 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class='bx bx-info-circle text-[#0096D6]'></i> Fragmentos</h3>
-    <div id="fragList" class="flex-1 overflow-y-auto space-y-3 mb-4"></div>
+  <!-- Panel derecho: tabs -->
+  <div class="w-full md:w-1/3 glass rounded-2xl p-4 shadow-lg border border-white/10 max-h-[90vh] flex flex-col">
+    
+    <!-- Tabs -->
+    <div class="flex mb-4 border-b border-white/20">
+      <button class="flex-1 py-2 text-center tab tab-active" data-tab="fragments"><i class='bx bx-info-circle mr-1'></i> Fragmentos</button>
+      <button class="flex-1 py-2 text-center tab" data-tab="history"><i class='bx bx-history mr-1'></i> Historial</button>
+      <button class="flex-1 py-2 text-center tab" data-tab="pdfs"><i class='bx bx-file-blank mr-1'></i> Documentos</button>
+    </div>
 
-    <h3 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class='bx bx-history text-[#0096D6]'></i> Historial</h3>
-    <div id="history" class="flex-1 overflow-y-auto space-y-3 mb-4"></div>
+    <!-- Tab content -->
+    <div id="tabContent" class="flex-1 overflow-y-auto">
 
-    <button id="openModal" class="bg-[#0096D6] px-4 py-2 rounded-xl text-white flex items-center gap-2 justify-center hover:bg-[#0072B1] transition"><i class='bx bx-detail'></i> Ver Prompt</button>
+      <!-- Fragmentos -->
+      <div class="tab-panel" id="fragments">
+        <div id="fragList" class="space-y-3"></div>
+      </div>
+
+      <!-- Historial -->
+      <div class="tab-panel hidden" id="historyTab">
+        <div id="history" class="space-y-3"></div>
+      </div>
+
+      <!-- PDFs -->
+      <div class="tab-panel hidden" id="pdfs">
+        <iframe src="https://example.com/documento.pdf" class="w-full h-[400px] rounded-lg border border-white/20"></iframe>
+        <p class="text-sm text-[#E5E5E5] mt-2">PDF de ejemplo incrustado.</p>
+      </div>
+
+    </div>
+
   </div>
 
-</div>
-
-<!-- Modal -->
-<div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
-  <div class="bg-[#00264D] rounded-2xl max-w-xl w-full p-6 relative">
-    <button id="closeModal" class="absolute top-3 right-3 text-white hover:text-[#0096D6]"><i class='bx bx-x text-2xl'></i></button>
-    <h2 class="text-xl font-semibold mb-3">Prompt enviado (simulado)</h2>
-    <pre id="promptBox" class="bg-[#004080] p-4 rounded-lg text-sm max-h-80 overflow-auto"></pre>
-  </div>
 </div>
 
 <script>
@@ -62,10 +76,6 @@ const questionInput = document.getElementById('question');
 const chatBox = document.getElementById('chatBox');
 const fragList = document.getElementById('fragList');
 const historyEl = document.getElementById('history');
-const modal = document.getElementById('modal');
-const openModal = document.getElementById('openModal');
-const closeModal = document.getElementById('closeModal');
-const promptBox = document.getElementById('promptBox');
 
 const MOCK_FRAGMENTS = [
   { source: "Millicom_Policies.pdf", page: 12, snippet: "Activar plan de respuesta ante incidentes y notificar a Compliance.", embScore: 0.89, tag:"Incidente" },
@@ -115,9 +125,6 @@ function simulateResponse(question){
 
   HISTORY.unshift({q: question, tag: "Incidente", conf: avgScore});
   renderHistory();
-
-  const ctx = frags.map(f=>`[${f.source} p.${f.page}]\n${f.snippet}`).join("\n\n");
-  promptBox.textContent = `Pregunta: ${question}\n\nContexto:\n${ctx}`;
   renderFragments(frags);
 }
 
@@ -133,9 +140,18 @@ askBtn.addEventListener('click',()=>{
   simulateResponse(q);
 });
 
-openModal.addEventListener('click', ()=> modal.classList.remove('hidden'));
-closeModal.addEventListener('click', ()=> modal.classList.add('hidden'));
-modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.add('hidden'); });
+// Tabs funcionales
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('tab-active'));
+    btn.classList.add('tab-active');
+    const tab = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+    if(tab==='fragments') document.getElementById('fragments').classList.remove('hidden');
+    if(tab==='history') document.getElementById('historyTab').classList.remove('hidden');
+    if(tab==='pdfs') document.getElementById('pdfs').classList.remove('hidden');
+  });
+});
 </script>
 
 </body>
