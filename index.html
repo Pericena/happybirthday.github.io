@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Profesional</title>
+<title>Bot SOC Profesional UX/UI</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
-body { background-color: #003366; color: #ffffff; }
-.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
-.tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+body { background-color: #0A1F44; color: #ffffff; }
+.glass { background: rgba(30,58,138,0.7); backdrop-filter: blur(12px); }
+.tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; cursor: default; }
 pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
-.tab-active { border-bottom: 2px solid #0096D6; font-weight: 600; }
+.tab-active { border-bottom: 3px solid #3B82F6; font-weight: 600; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgba(59,130,246,0.6); border-radius: 3px; }
 </style>
 </head>
 <body class="antialiased">
@@ -22,16 +24,16 @@ pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto 
   <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col max-h-[90vh]">
     <header class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-semibold text-white">Bot SOC</h1>
-      <i class='bx bx-robot text-3xl text-[#0096D6]'></i>
+      <i class='bx bx-robot text-3xl text-[#3B82F6]'></i>
     </header>
 
-    <div id="chatBox" class="flex-1 overflow-y-auto bg-[#00264D] p-4 rounded-xl space-y-3">
-      <div class="bg-[#0096D6] p-3 rounded-lg max-w-[75%] text-white">¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
+    <div id="chatBox" class="flex-1 overflow-y-auto scrollbar-thin p-4 rounded-xl space-y-3 bg-[#0F2B66]">
+      <div class="bg-[#3B82F6] p-3 rounded-xl max-w-[75%] text-white shadow-lg">¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
     </div>
 
     <div class="mt-4 flex gap-2">
-      <input id="question" type="text" placeholder="Ej: ¿Qué hacer ante fuga de datos?" class="flex-1 px-4 py-3 rounded-xl bg-[#004080] text-white focus:outline-none focus:ring-2 focus:ring-[#0096D6]"/>
-      <button id="askBtn" class="px-4 py-3 rounded-xl bg-[#0096D6] text-white font-semibold hover:scale-[1.02] transition">Consultar</button>
+      <input id="question" type="text" placeholder="Ej: ¿Qué hacer ante fuga de datos?" class="flex-1 px-4 py-3 rounded-xl bg-[#1E3A8A] text-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"/>
+      <button id="askBtn" class="px-4 py-3 rounded-xl bg-[#3B82F6] text-white font-semibold hover:scale-[1.02] transition">Consultar</button>
     </div>
   </div>
 
@@ -46,7 +48,7 @@ pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto 
     </div>
 
     <!-- Tab content -->
-    <div id="tabContent" class="flex-1 overflow-y-auto">
+    <div id="tabContent" class="flex-1 overflow-y-auto scrollbar-thin">
 
       <!-- Fragmentos -->
       <div class="tab-panel" id="fragments">
@@ -89,17 +91,23 @@ function renderFragments(frags){
   fragList.innerHTML = "";
   frags.forEach(f=>{
     const div = document.createElement('div');
-    div.className = "p-3 bg-[#004080] rounded-lg border border-white/10 text-sm";
-    const color = f.tag==='Incidente'?'bg-red-600':f.tag==='Política'?'bg-[#0096D6]':'bg-indigo-500';
+    div.className = "p-3 bg-[#1E3A8A] rounded-lg border border-white/10 text-sm hover:shadow-lg hover:bg-[#2C4A9B] transition relative";
+    const color = f.tag==='Incidente'?'bg-red-500':f.tag==='Política'?'bg-[#3B82F6]':'bg-indigo-400';
     div.innerHTML = `
       <div class="flex items-center justify-between mb-1">
         <div class="font-semibold text-white">${f.source} • p.${f.page}</div>
         <span class="tag ${color}">${f.tag}</span>
       </div>
-      <div class="text-white">${f.snippet}</div>
-      <div class="text-xs text-[#E5E5E5] mt-1">Score: ${Math.round(f.embScore*100)}%</div>
+      <div class="text-white mb-2">${f.snippet}</div>
+      <div class="flex items-center justify-between text-xs text-[#E5E5E5]">
+        <span>Score: ${Math.round(f.embScore*100)}%</span>
+        <button class="copyBtn text-white/70 hover:text-white"><i class='bx bx-copy'></i></button>
+      </div>
     `;
     fragList.appendChild(div);
+
+    // Copiar al portapapeles
+    div.querySelector('.copyBtn').addEventListener('click',()=>navigator.clipboard.writeText(f.snippet));
   });
 }
 
@@ -107,7 +115,7 @@ function renderHistory(){
   historyEl.innerHTML = "";
   HISTORY.slice(0,6).forEach(h=>{
     const div = document.createElement('div');
-    div.className = "p-2 bg-[#004080] rounded flex items-center justify-between text-sm";
+    div.className = "p-2 bg-[#1E3A8A] rounded flex items-center justify-between text-sm hover:shadow-md transition";
     div.innerHTML = `<div>${h.q}<br><span class="text-xs text-[#E5E5E5]">${h.tag}</span></div><div class="font-semibold">${h.conf}%</div>`;
     historyEl.appendChild(div);
   });
@@ -118,7 +126,7 @@ function simulateResponse(question){
   const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
   const respText = "Según documentos, ante una fuga de datos: activar plan, notificar a Compliance, contener fuga y documentar evidencia.";
   const botDiv = document.createElement('div');
-  botDiv.className = "bg-[#0096D6] p-3 rounded-lg max-w-[75%]";
+  botDiv.className = "bg-[#3B82F6] p-3 rounded-xl max-w-[75%] shadow-lg";
   botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>${respText}`;
   chatBox.appendChild(botDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -132,7 +140,7 @@ askBtn.addEventListener('click',()=>{
   const q = questionInput.value.trim();
   if(!q) return alert("Escribe tu pregunta.");
   const userDiv = document.createElement('div');
-  userDiv.className = "bg-[#004080] p-3 rounded-lg max-w-[75%] ml-auto";
+  userDiv.className = "bg-[#0F2B66] p-3 rounded-xl max-w-[75%] ml-auto shadow-md";
   userDiv.textContent = q;
   chatBox.appendChild(userDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
