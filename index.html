@@ -1,132 +1,148 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Bot Ciberseguridad Millicom</title>
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Boxicons CDN -->
-  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <style>
-    /* Personalizaciones */
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
-    .accent { background: linear-gradient(90deg,#0ea5a4,#7c3aed); -webkit-background-clip: text; color: transparent; }
-    pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bot RAG Ciberseguridad - Millicom</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<style>
+  .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
+  .accent { background: linear-gradient(90deg,#0ea5a4,#7c3aed); -webkit-background-clip: text; color: transparent; }
+  pre.snippet { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; white-space: pre-wrap; word-break: break-word; }
+  .tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+</style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased">
 
-  <!-- Contenedor principal -->
-  <div class="min-h-screen flex flex-col md:flex-row items-center justify-center p-4 gap-4">
+<div class="min-h-screen flex flex-col md:flex-row p-4 gap-4">
 
-    <!-- Panel izquierdo: chat -->
-    <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col max-h-[90vh]">
-      <header class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-semibold">Bot de Ciberseguridad <span class="accent">Millicom</span></h1>
-        <i class='bx bx-robot text-3xl text-teal-400'></i>
-      </header>
+  <!-- Chat / Preguntas -->
+  <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col max-h-[90vh]">
+    <header class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-semibold">Bot RAG <span class="accent">Millicom</span></h1>
+      <i class='bx bx-robot text-3xl text-teal-400'></i>
+    </header>
 
-      <!-- Chat display -->
-      <div id="chatBox" class="flex-1 overflow-y-auto bg-gray-800 p-4 rounded-xl space-y-3">
-        <div class="bg-teal-600 p-3 rounded-lg max-w-[75%]">¡Hola! Soy tu asistente de ciberseguridad. Pregunta lo que necesites y te mostraré la referencia y % confianza.</div>
-      </div>
-
-      <!-- Input -->
-      <div class="mt-4 flex gap-2">
-        <input id="question" type="text" placeholder="Escribe tu pregunta..." class="flex-1 px-4 py-3 rounded-xl bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-400"/>
-        <button id="askBtn" class="px-4 py-3 rounded-xl bg-gradient-to-r from-teal-400 to-violet-600 text-black font-semibold hover:scale-[1.02] transition">Consultar</button>
-      </div>
+    <div id="chatBox" class="flex-1 overflow-y-auto bg-gray-800 p-4 rounded-xl space-y-3">
+      <div class="bg-teal-600 p-3 rounded-lg max-w-[75%]">¡Hola! Pregunta sobre políticas, incidentes o controles y te daré respuesta con referencia a documentos y % confianza.</div>
     </div>
 
-    <!-- Panel derecho: detalles / historial -->
-    <div class="w-full md:w-1/3 glass rounded-2xl p-6 shadow-lg border border-white/10 max-h-[90vh] flex flex-col">
-      <h3 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class='bx bx-info-circle'></i> Detalles del RAG</h3>
-
-      <!-- Fragmentos -->
-      <div id="fragList" class="flex-1 overflow-y-auto space-y-3 mb-4">
-        <!-- Se llenará con JS -->
-      </div>
-
-      <!-- Modal trigger -->
-      <button id="openModal" class="bg-indigo-600 px-4 py-2 rounded-xl text-white flex items-center gap-2 justify-center hover:bg-indigo-700 transition"><i class='bx bx-detail'></i> Ver Prompt</button>
-    </div>
-
-  </div>
-
-  <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-2xl max-w-xl w-full p-6 relative">
-      <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i class='bx bx-x text-2xl'></i></button>
-      <h2 class="text-xl font-semibold mb-3">Prompt enviado (simulado)</h2>
-      <pre id="promptBox" class="bg-gray-900 p-4 rounded-lg text-sm max-h-80 overflow-auto"></pre>
+    <div class="mt-4 flex gap-2">
+      <input id="question" type="text" placeholder="Ej: ¿Qué hacer ante fuga de datos?" class="flex-1 px-4 py-3 rounded-xl bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+      <button id="askBtn" class="px-4 py-3 rounded-xl bg-gradient-to-r from-teal-400 to-violet-600 text-black font-semibold hover:scale-[1.02] transition">Consultar</button>
     </div>
   </div>
 
-  <script>
-    const askBtn = document.getElementById('askBtn');
-    const questionInput = document.getElementById('question');
-    const chatBox = document.getElementById('chatBox');
-    const fragList = document.getElementById('fragList');
-    const modal = document.getElementById('modal');
-    const openModal = document.getElementById('openModal');
-    const closeModal = document.getElementById('closeModal');
-    const promptBox = document.getElementById('promptBox');
+  <!-- Panel derecho: Detalles y historial -->
+  <div class="w-full md:w-1/3 glass rounded-2xl p-6 shadow-lg border border-white/10 max-h-[90vh] flex flex-col">
+    <h3 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class='bx bx-info-circle'></i> Detalles / Fragmentos</h3>
+    
+    <div id="fragList" class="flex-1 overflow-y-auto space-y-3 mb-4"></div>
 
-    // Mock fragments
-    const MOCK_FRAGMENTS = [
-      { source: "Millicom_Policies.pdf", page: 12, snippet: "Activar plan de respuesta ante incidentes y notificar a Compliance.", embScore: 0.89 },
-      { source: "ISO27001.pdf", page: "A.18.1.3", snippet: "Documentar procedimientos de gestión y comunicación de incidentes.", embScore: 0.84 },
-      { source: "NIST_CSF.pdf", page: "RS-1", snippet: "Coordinar la comunicación durante y después de un incidente.", embScore: 0.78 }
-    ];
+    <h3 class="text-lg font-semibold mb-2 flex items-center gap-2"><i class='bx bx-history'></i> Historial</h3>
+    <div id="history" class="flex-1 overflow-y-auto space-y-3"></div>
 
-    function renderFragments(frags){
-      fragList.innerHTML = "";
-      frags.forEach(f=>{
-        const div = document.createElement('div');
-        div.className = "p-3 bg-gray-700 rounded-lg border border-white/10 text-sm";
-        div.innerHTML = `<div class="text-xs text-gray-400">${f.source} • p.${f.page}</div>
-                         <div class="text-gray-200 mt-1">${f.snippet}</div>
-                         <div class="text-xs text-gray-400 mt-1">Score: ${Math.round(f.embScore*100)}%</div>`;
-        fragList.appendChild(div);
-      });
-    }
+    <button id="openModal" class="bg-indigo-600 px-4 py-2 rounded-xl text-white flex items-center gap-2 justify-center hover:bg-indigo-700 transition"><i class='bx bx-detail'></i> Ver Prompt</button>
+  </div>
 
-    function simulateResponse(question){
-      const frags = MOCK_FRAGMENTS.slice().sort((a,b)=>b.embScore-a.embScore).slice(0,3);
-      const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
-      // respuesta simulada
-      const resp = `Según los documentos, ante una fuga de datos: activar plan, notificar a Compliance, contener fuga y documentar evidencia.`;
-      const botDiv = document.createElement('div');
-      botDiv.className = "bg-indigo-600 p-3 rounded-lg max-w-[75%]";
-      botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>${resp}`;
-      chatBox.appendChild(botDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+</div>
 
-      // guardar prompt simulado
-      const ctx = frags.map(f=>`[${f.source} p.${f.page}]\n${f.snippet}`).join("\n\n");
-      promptBox.textContent = `Pregunta: ${question}\n\nContexto:\n${ctx}`;
-      renderFragments(frags);
-    }
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+  <div class="bg-gray-800 rounded-2xl max-w-xl w-full p-6 relative">
+    <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i class='bx bx-x text-2xl'></i></button>
+    <h2 class="text-xl font-semibold mb-3">Prompt enviado (simulado)</h2>
+    <pre id="promptBox" class="bg-gray-900 p-4 rounded-lg text-sm max-h-80 overflow-auto"></pre>
+  </div>
+</div>
 
-    askBtn.addEventListener('click',()=>{
-      const q = questionInput.value.trim();
-      if(!q) return alert("Escribe tu pregunta.");
-      // mostrar pregunta
-      const userDiv = document.createElement('div');
-      userDiv.className = "bg-gray-600 p-3 rounded-lg max-w-[75%] ml-auto";
-      userDiv.textContent = q;
-      chatBox.appendChild(userDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      questionInput.value = '';
-      simulateResponse(q);
-    });
+<script>
+const askBtn = document.getElementById('askBtn');
+const questionInput = document.getElementById('question');
+const chatBox = document.getElementById('chatBox');
+const fragList = document.getElementById('fragList');
+const historyEl = document.getElementById('history');
+const modal = document.getElementById('modal');
+const openModal = document.getElementById('openModal');
+const closeModal = document.getElementById('closeModal');
+const promptBox = document.getElementById('promptBox');
 
-    // Modal
-    openModal.addEventListener('click', ()=> modal.classList.remove('hidden'));
-    closeModal.addEventListener('click', ()=> modal.classList.add('hidden'));
-    modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.add('hidden'); });
+// Simulación de fragments
+const MOCK_FRAGMENTS = [
+  { source: "Millicom_Policies.pdf", page: 12, snippet: "Activar plan de respuesta ante incidentes y notificar a Compliance.", embScore: 0.89, tag:"Incidente" },
+  { source: "ISO27001.pdf", page: "A.18.1.3", snippet: "Documentar procedimientos de gestión y comunicación de incidentes.", embScore: 0.84, tag:"Control" },
+  { source: "NIST_CSF.pdf", page: "RS-1", snippet: "Coordinar la comunicación durante y después de un incidente.", embScore: 0.78, tag:"Política" }
+];
 
-  </script>
+const HISTORY = [];
+
+function renderFragments(frags){
+  fragList.innerHTML = "";
+  frags.forEach(f=>{
+    const div = document.createElement('div');
+    div.className = "p-3 bg-gray-700 rounded-lg border border-white/10 text-sm";
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <div class="font-semibold text-gray-200">${f.source} • p.${f.page}</div>
+        <span class="tag ${f.tag==='Incidente'?'bg-red-600':f.tag==='Política'?'bg-yellow-500':'bg-teal-500'}">${f.tag}</span>
+      </div>
+      <div class="text-gray-200">${f.snippet}</div>
+      <div class="text-xs text-gray-400 mt-1">Score: ${Math.round(f.embScore*100)}%</div>
+    `;
+    fragList.appendChild(div);
+  });
+}
+
+function renderHistory(){
+  historyEl.innerHTML = "";
+  HISTORY.slice(0,6).forEach(h=>{
+    const div = document.createElement('div');
+    div.className = "p-2 bg-gray-800 rounded flex items-center justify-between text-sm";
+    div.innerHTML = `<div>${h.q}<br><span class="text-xs text-gray-400">${h.tag}</span></div><div class="font-semibold">${h.conf}%</div>`;
+    historyEl.appendChild(div);
+  });
+}
+
+function simulateResponse(question){
+  const frags = MOCK_FRAGMENTS.slice().sort((a,b)=>b.embScore-a.embScore).slice(0,3);
+  const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
+  const respText = "Según documentos, ante una fuga de datos: activar plan, notificar a Compliance, contener fuga y documentar evidencia.";
+  const botDiv = document.createElement('div');
+  botDiv.className = "bg-indigo-600 p-3 rounded-lg max-w-[75%]";
+  botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>${respText}`;
+  chatBox.appendChild(botDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  // guardar historial
+  HISTORY.unshift({q: question, tag: "Incidente", conf: avgScore});
+  renderHistory();
+
+  // prompt simulado
+  const ctx = frags.map(f=>`[${f.source} p.${f.page}]\n${f.snippet}`).join("\n\n");
+  promptBox.textContent = `Pregunta: ${question}\n\nContexto:\n${ctx}`;
+  renderFragments(frags);
+}
+
+// Botón de consulta
+askBtn.addEventListener('click',()=>{
+  const q = questionInput.value.trim();
+  if(!q) return alert("Escribe tu pregunta.");
+  // mostrar pregunta
+  const userDiv = document.createElement('div');
+  userDiv.className = "bg-gray-600 p-3 rounded-lg max-w-[75%] ml-auto";
+  userDiv.textContent = q;
+  chatBox.appendChild(userDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  questionInput.value = '';
+  simulateResponse(q);
+});
+
+// Modal
+openModal.addEventListener('click', ()=> modal.classList.remove('hidden'));
+closeModal.addEventListener('click', ()=> modal.classList.add('hidden'));
+modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.add('hidden'); });
+</script>
+
 </body>
 </html>
