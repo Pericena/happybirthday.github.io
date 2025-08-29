@@ -1,1 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .accent {
+      background: linear-gradient(90deg, #0ea5a4, #7c3aed);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .tag {
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      height: 0.5rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s ease-in-out;
+    }
+
+    .suggestion-chip {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .suggestion-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-message {
+      max-width: 80%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-gray-800 py-4 px-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class='bx bx-shield-quarter text-3xl text-teal-400'></i>
+      <h1 class="text-xl font-bold">BOT<span class="accent">Assistant</span></h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-400">Simulación IA</span>
+      <div class="w-3 h-3 rounded-full bg-green-500"></div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col md:flex-row p-4 gap-4">
+    <!-- Panel izquierdo: Chat y consultas -->
+    <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold">bot</h2>
+        <div class="flex gap-2">
+          <button id="uploadBtn"
+            class="px-3 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 transition flex items-center gap-2">
+            <i class='bx bx-upload'></i> Subir PDF
+          </button>
+          <button class="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition flex items-center gap-2">
+            <i class='bx bx-history'></i> Historial
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat container -->
+      <div id="chatContainer" class="flex-1 overflow-y-auto mb-4 p-4 bg-gray-800/50 rounded-xl space-y-4 max-h-[40vh]">
+        <div class="chat-message bg-teal-600 p-4 rounded-lg">
+          <div class="flex items-center gap-2 mb-2">
+            <i class='bx bx-bot text-teal-200'></i>
+            <span class="font-medium">Bot</span>
+          </div>
+          <p>¡Hola! Soy tu asistente de seguridad. Puedes subir documentos PDF relacionados con políticas de seguridad,
+            procedimientos o normativas, y luego hacerme preguntas sobre ellos. También puedo ayudarte con
+            recomendaciones generales de ciberseguridad.</p>
+        </div>
+      </div>
+
+      <!-- Sugerencias -->
+      <div class="mb-4">
+        <h3 class="text-sm font-medium text-gray-400 mb-2">Preguntas sugeridas:</h3>
+        <div class="flex flex-wrap gap-2">
+          <div class="suggestion-chip bg-gray-700 px-3 py-2 rounded-lg text-sm">¿Qué hacer ante una fuga de datos?</div>
+          <div class="suggestion-chip bg-gray-700 px-3 py-2 rounded-lg text-sm">¿Cómo reportar un incidente?</div>
+          <div class="suggestion-chip bg-gray-700 px-3 py-2 rounded-lg text-sm">Revisar políticas de acceso</div>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div class="flex gap-2">
+        <input id="questionInput" type="text" placeholder="Escribe tu pregunta sobre seguridad..."
+          class="flex-1 px-4 py-3 rounded-xl bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-400">
+        <button id="sendBtn"
+          class="px-4 py-3 rounded-xl bg-gradient-to-r from-teal-400 to-violet-600 text-white font-semibold hover:opacity-90 transition flex items-center gap-2">
+          <i class='bx bx-send'></i> Enviar
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel derecho: Información y detalles -->
+    <div class="w-full md:w-1/3 glass rounded-2xl p-6 shadow-lg border border-white/10 flex flex-col">
+      <h2 class="text-lg font-semibold mb-4">Información del análisis</h2>
+
+      <!-- Estado de documentos -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-gray-400 mb-2">Documentos cargados</h3>
+        <div id="documentsList" class="bg-gray-800/50 rounded-lg p-3 text-sm">
+          <p class="text-gray-400 italic">No hay documentos cargados</p>
+        </div>
+      </div>
+
+      <!-- Confianza -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-gray-400 mb-2">Nivel de confianza</h3>
+        <div class="bg-gray-800/50 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span>Confianza del análisis:</span>
+            <span id="confidenceValue" class="font-semibold">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div id="confidenceBar" class="progress-fill bg-gradient-to-r from-teal-400 to-violet-600"
+              style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fragmentos relevantes -->
+      <div class="mb-6">
+        <h3 class="text-sm font-medium text-gray-400 mb-2">Fragmentos relevantes</h3>
+        <div id="fragmentsContainer" class="space-y-3 max-h-[20vh] overflow-y-auto">
+          <p class="text-gray-400 italic text-sm">Los fragmentos relevantes aparecerán aquí después de analizar
+            documentos</p>
+        </div>
+      </div>
+
+      <!-- Recomendaciones -->
+      <div>
+        <h3 class="text-sm font-medium text-gray-400 mb-2">Recomendaciones</h3>
+        <div id="recommendationsContainer" class="space-y-2">
+          <p class="text-gray-400 italic text-sm">Las recomendaciones aparecerán aquí después del análisis</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para subir PDF -->
+  <div id="uploadModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-2xl max-w-md w-full p-6 relative">
+      <button id="closeModal" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class='bx bx-x text-2xl'></i>
+      </button>
+      <h2 class="text-xl font-semibold mb-2">Subir documento PDF</h2>
+      <p class="text-gray-400 mb-4">Sube políticas, procedimientos o normativas de seguridad para analizar</p>
+
+      <div class="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center mb-4">
+        <i class='bx bx-cloud-upload text-4xl text-gray-400 mb-2'></i>
+        <p class="text-gray-400">Arrastra tu archivo PDF aquí o</p>
+        <label for="fileInput"
+          class="inline-block mt-2 px-4 py-2 bg-teal-700 rounded-lg cursor-pointer hover:bg-teal-600 transition">
+          Seleccionar archivo
+        </label>
+        <input type="file" id="fileInput" accept=".pdf" class="hidden">
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button id="cancelUpload" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition">
+          Cancelar
+        </button>
+        <button id="confirmUpload" class="px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 transition">
+          Analizar documento
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Elementos del DOM
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadModal = document.getElementById('uploadModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelUpload = document.getElementById('cancelUpload');
+    const confirmUpload = document.getElementById('confirmUpload');
+    const fileInput = document.getElementById('fileInput');
+    const questionInput = document.getElementById('questionInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatContainer = document.getElementById('chatContainer');
+    const documentsList = document.getElementById('documentsList');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const confidenceBar = document.getElementById('confidenceBar');
+    const fragmentsContainer = document.getElementById('fragmentsContainer');
+    const recommendationsContainer = document.getElementById('recommendationsContainer');
+
+    // Estado de la aplicación
+    let uploadedDocuments = [];
+    let chatHistory = [];
+
+    // Abrir modal de subida
+    uploadBtn.addEventListener('click', () => {
+      uploadModal.classList.remove('hidden');
+    });
+
+    // Cerrar modal
+    const closeUploadModal = () => uploadModal.classList.add('hidden');
+    closeModal.addEventListener('click', closeUploadModal);
+    cancelUpload.addEventListener('click', closeUploadModal);
+
+    // Confirmar subida
+    confirmUpload.addEventListener('click', () => {
+      if (!fileInput.files.length) {
+        alert('Por favor, selecciona un archivo PDF');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      simulatePDFUpload(file);
+      closeUploadModal();
+    });
+
+    // Enviar pregunta
+    sendBtn.addEventListener('click', handleQuestion);
+    questionInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleQuestion();
+    });
+
+    // Sugerencias de preguntas
+    document.querySelectorAll('.suggestion-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        questionInput.value = chip.textContent;
+        handleQuestion();
+      });
+    });
+
+    // Simular subida y procesamiento de PDF
+    function simulatePDFUpload(file) {
+      const documentName = file.name;
+      const documentId = Date.now();
+
+      // Añadir a la lista de documentos
+      uploadedDocuments.push({
+        id: documentId,
+        name: documentName,
+        pages: Math.floor(Math.random() * 20) + 10, // Simular número de páginas
+        processed: false
+      });
+
+      // Actualizar UI
+      updateDocumentsList();
+
+      // Simular procesamiento
+      setTimeout(() => {
+        // Marcar como procesado
+        const docIndex = uploadedDocuments.findIndex(doc => doc.id === documentId);
+        if (docIndex !== -1) {
+          uploadedDocuments[docIndex].processed = true;
+          updateDocumentsList();
+
+          // Mostrar mensaje de confirmación
+          addMessage(`Documento "${documentName}" procesado correctamente. Ahora puedes hacer preguntas sobre su contenido.`, 'bot');
+        }
+      }, 2000);
+    }
+
+    // Actualizar lista de documentos
+    function updateDocumentsList() {
+      if (uploadedDocuments.length === 0) {
+        documentsList.innerHTML = '<p class="text-gray-400 italic">No hay documentos cargados</p>';
+        return;
+      }
+
+      documentsList.innerHTML = '';
+      uploadedDocuments.forEach(doc => {
+        const docEl = document.createElement('div');
+        docEl.className = 'flex items-center justify-between py-2 border-b border-gray-700';
+        docEl.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class='bx bx-file ${doc.processed ? 'text-teal-400' : 'text-yellow-400'}'></i>
+                        <span>${doc.name}</span>
+                    </div>
+                    <span class="text-xs ${doc.processed ? 'text-teal-400' : 'text-yellow-400'}">
+                        ${doc.processed ? 'Procesado' : 'Procesando...'}
+                    </span>
+                `;
+        documentsList.appendChild(docEl);
+      });
+    }
+
+    // Manejar pregunta del usuario
+    function handleQuestion() {
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      // Añadir mensaje del usuario
+      addMessage(question, 'user');
+      questionInput.value = '';
+
+      // Simular procesamiento
+      setTimeout(() => {
+        simulateAIResponse(question);
+      }, 1000 + Math.random() * 1000);
+    }
+
+    // Simular respuesta de IA
+    function simulateAIResponse(question) {
+      // Determinar tipo de pregunta para respuesta contextual
+      let responseText = '';
+      let confidence = 0;
+      let fragments = [];
+      let recommendations = [];
+
+      if (question.toLowerCase().includes('fuga') || question.toLowerCase().includes('datos')) {
+        responseText = 'Según las políticas de seguridad analizadas, ante una posible fuga de datos se debe: 1) Activar inmediatamente el protocolo de respuesta a incidentes, 2) Aislar los sistemas afectados, 3) Notificar al oficial de seguridad y al equipo legal, 4) Documentar todo el proceso para análisis posterior.';
+        confidence = 85;
+        fragments = [
+          { source: 'Política de Respuesta a Incidentes.pdf', page: 12, content: 'En caso de fuga de datos confidenciales, el empleado debe notificar inmediatamente a su supervisor y al oficial de seguridad de la información.' },
+          { source: 'Manual de Procedimientos SOC.pdf', page: 24, content: 'El protocolo de contención debe activarse en un plazo no mayor a 15 minutos después de detectado el incidente.' }
+        ];
+        recommendations = [
+          'Revisar los logs de acceso a datos sensibles en las últimas 72 horas',
+          'Verificar el estado de las copias de seguridad',
+          'Actualizar el inventario de datos afectados'
+        ];
+      }
+      else if (question.toLowerCase().includes('incidente') || question.toLowerCase().includes('reportar')) {
+        responseText = 'Para reportar un incidente de seguridad, debe utilizar el formulario oficial de reporte en la intranet corporativa o contactar directamente al SOC mediante el canal de Telegram @company_soc. Todos los incidentes deben ser reportados en un plazo máximo de 60 minutos después de su detección.';
+        confidence = 92;
+        fragments = [
+          { source: 'Procedimiento de Reporte de Incidentes.pdf', page: 3, content: 'Todo incidente de seguridad debe ser reportado mediante los canales oficiales en un plazo no mayor a 60 minutos desde su detección.' },
+          { source: 'Política de Comunicaciones SOC.pdf', page: 8, content: 'El canal principal de comunicación para reportar incidentes es mediante el grupo de Telegram @company_soc, disponible 24/7.' }
+        ];
+        recommendations = [
+          'Mantener evidencia del incidente (capturas de pantalla, logs, etc.)',
+          'No apagar o reiniciar equipos afectados hasta que lo indique el equipo SOC',
+          'Documentar hora exacta de detección y posibles afectados'
+        ];
+      }
+      else if (question.toLowerCase().includes('acceso') || question.toLowerCase().includes('políticas')) {
+        responseText = 'Las políticas de acceso establecen que los privilegios deben asignarse según el principio de mínimo privilegio. Los usuarios solo deben tener acceso a los recursos necesarios para realizar sus funciones laborales. Los accesos deben revisarse trimestralmente y revocarse inmediatamente tras un cambio de puesto o baja laboral.';
+        confidence = 78;
+        fragments = [
+          { source: 'Política de Control de Accesos.pdf', page: 5, content: 'El principio de mínimo privilegio debe regir todas las asignaciones de acceso a sistemas y datos confidenciales.' },
+          { source: 'Normativa de Identidad y Acceso.pdf', page: 11, content: 'Las revisiones de acceso deben realizarse trimestralmente para todos los usuarios con privilegios elevados.' }
+        ];
+        recommendations = [
+          'Revisar los accesos de usuarios que hayan cambiado de departamento en los últimos 3 meses',
+          'Auditar cuentas con privilegios administrativos que no hayan sido utilizadas en los últimos 90 días',
+          'Verificar que no existan cuentas genéricas con acceso a datos sensibles'
+        ];
+      }
+      else {
+        responseText = 'He analizado la documentación disponible y, basándome en las políticas de seguridad, puedo indicar que es importante seguir los protocolos establecidos para cada tipo de incidente. ¿Podrías proporcionar más detalles o especificar si te refieres a algún aspecto concreto de las políticas de seguridad?';
+        confidence = 65;
+        fragments = [
+          { source: 'Manual General de Seguridad.pdf', page: 2, content: 'Todos los empleados deben conocer y seguir los protocolos de seguridad establecidos por la organización.' },
+          { source: 'Introducción a las Políticas SOC.pdf', page: 7, content: 'El incumplimiento de las políticas de seguridad puede resultar en medidas disciplinarias según la gravedad de la infracción.' }
+        ];
+        recommendations = [
+          'Revisar el manual de seguridad para empleados',
+          'Contactar al departamento de seguridad para casos específicos',
+          'Participar en los próximos entrenamientos de concienciación en seguridad'
+        ];
+      }
+
+      // Actualizar UI con la respuesta
+      addMessage(responseText, 'bot');
+      updateConfidence(confidence);
+      updateFragments(fragments);
+      updateRecommendations(recommendations);
+    }
+
+    // Añadir mensaje al chat
+    function addMessage(text, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${sender === 'user' ? 'bg-gray-700 ml-auto' : 'bg-teal-600'} p-4 rounded-lg`;
+
+      if (sender === 'bot') {
+        messageDiv.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class='bx bx-bot text-teal-200'></i>
+                        <span class="font-medium">SOC Assistant</span>
+                    </div>
+                    <p>${text}</p>
+                `;
+      } else {
+        messageDiv.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2 justify-end">
+                        <span class="font-medium">Tú</span>
+                        <i class='bx bx-user text-gray-300'></i>
+                    </div>
+                    <p>${text}</p>
+                `;
+      }
+
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // Guardar en historial
+      chatHistory.push({ text, sender });
+    }
+
+    // Actualizar indicador de confianza
+    function updateConfidence(value) {
+      confidenceValue.textContent = `${value}%`;
+      confidenceBar.style.width = `${value}%`;
+    }
+
+    // Actualizar fragmentos relevantes
+    function updateFragments(fragments) {
+      fragmentsContainer.innerHTML = '';
+
+      if (fragments.length === 0) {
+        fragmentsContainer.innerHTML = '<p class="text-gray-400 italic text-sm">No se encontraron fragmentos relevantes</p>';
+        return;
+      }
+
+      fragments.forEach(fragment => {
+        const fragmentEl = document.createElement('div');
+        fragmentEl.className = 'bg-gray-800/50 p-3 rounded-lg text-sm';
+        fragmentEl.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-medium text-teal-300">${fragment.source}</span>
+                        <span class="text-xs bg-gray-700 px-2 py-1 rounded">Pág. ${fragment.page}</span>
+                    </div>
+                    <p class="text-gray-200">${fragment.content}</p>
+                `;
+        fragmentsContainer.appendChild(fragmentEl);
+      });
+    }
+
+    // Actualizar recomendaciones
+    function updateRecommendations(recommendations) {
+      recommendationsContainer.innerHTML = '';
+
+      if (recommendations.length === 0) {
+        recommendationsContainer.innerHTML = '<p class="text-gray-400 italic text-sm">No hay recomendaciones disponibles</p>';
+        return;
+      }
+
+      recommendations.forEach((rec, index) => {
+        const recEl = document.createElement('div');
+        recEl.className = 'flex items-start gap-2';
+        recEl.innerHTML = `
+                    <span class="bg-teal-400/20 text-teal-300 rounded-full w-5 h-5 flex items-center justify-center text-xs mt-0.5">${index + 1}</span>
+                    <span class="text-sm">${rec}</span>
+                `;
+        recommendationsContainer.appendChild(recEl);
+      });
+    }
+  </script>
+</body>
+
+</html>
