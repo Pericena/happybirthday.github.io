@@ -1,183 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bot SOC Dashboard Simulación</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-<style>
-body { background-color: #F8FAFC; color: #1E293B; }
-.glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); }
-.tag { padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; cursor: default; }
-.tab-active { border-bottom: 3px solid #3B82F6; font-weight: 600; }
-.scrollbar-thin::-webkit-scrollbar { width: 6px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgba(59,130,246,0.4); border-radius: 3px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulación Análisis de Memoria RAW</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="antialiased">
+<body class="bg-white text-gray-800 font-sans">
 
-<div class="min-h-screen flex flex-col md:flex-row p-4 gap-4">
+  <!-- Header -->
+  <header class="bg-blue-600 text-white p-4 shadow-md">
+    <h1 class="text-2xl font-bold">Dashboard Simulación Forense</h1>
+    <p class="text-sm">Análisis de memoria RAW - Pasos y recomendaciones</p>
+  </header>
 
-  <!-- Panel Chat -->
-  <div class="w-full md:w-2/3 glass rounded-2xl p-6 shadow-lg border border-gray-200 flex flex-col max-h-[90vh]">
-    <header class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-semibold text-gray-800">Bot</h1>
-      <i class='bx bx-robot text-3xl text-blue-500'></i>
-    </header>
+  <!-- Contenedor principal -->
+  <main class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
 
-    <div id="chatBox" class="flex-1 overflow-y-auto scrollbar-thin p-4 rounded-xl space-y-3 bg-white">
-      <div class="bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800">¡Hola! Pregunta sobre incidentes, riesgos o controles y te daré respuesta con respaldo de documentos y % confianza.</div>
-    </div>
+    <!-- Sidebar / Tags -->
+    <aside class="md:col-span-1 bg-gray-100 rounded-lg p-4 shadow-inner">
+      <h2 class="font-bold text-lg mb-2">Áreas de Análisis</h2>
+      <div class="flex flex-col space-y-2">
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Procesos
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Comandos
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Conexiones de Red
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Archivos en Memoria
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Usuarios
+        </label>
+        <label class="flex items-center">
+          <input type="checkbox" class="mr-2" checked> Anomalías IA
+        </label>
+      </div>
+      <button id="analizarBtn" class="mt-4 bg-blue-600 text-white rounded p-2 hover:bg-blue-700 transition">
+        Analizar
+      </button>
+    </aside>
 
-    <div class="mt-4 flex gap-2">
-      <input id="question" type="text" placeholder="Ej: Fuga de datos de clientes" class="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-      <button id="askBtn" class="px-4 py-3 rounded-xl bg-blue-500 text-white font-semibold hover:scale-[1.02] transition">Consultar</button>
-    </div>
-  </div>
+    <!-- Contenido principal -->
+    <section class="md:col-span-3 space-y-6">
 
-  <!-- Panel derecho con tabs -->
-  <div class="w-full md:w-1/3 glass rounded-2xl p-4 shadow-lg border border-gray-200 max-h-[90vh] flex flex-col">
-    
-    <!-- Tabs -->
-    <div class="flex mb-4 border-b border-gray-300">
-      <button class="flex-1 py-2 text-center tab tab-active" data-tab="fragments"><i class='bx bx-info-circle mr-1'></i> Fragmentos</button>
-      <button class="flex-1 py-2 text-center tab" data-tab="history"><i class='bx bx-history mr-1'></i> Historial</button>
-      <button class="flex-1 py-2 text-center tab" data-tab="pdfs"><i class='bx bx-file-blank mr-1'></i> Documentos</button>
-    </div>
-
-    <!-- Tab content -->
-    <div id="tabContent" class="flex-1 overflow-y-auto scrollbar-thin">
-
-      <!-- Fragmentos -->
-      <div class="tab-panel" id="fragments">
-        <div id="fragList" class="space-y-3"></div>
+      <!-- Paso 1: Cargar archivo -->
+      <div class="bg-gray-50 rounded-lg p-4 shadow-md">
+        <h2 class="font-bold text-lg mb-2">Paso 1: Cargar archivo RAW</h2>
+        <input type="file" id="fileInput" class="border border-gray-300 rounded p-2 w-full" />
+        <p class="text-sm mt-1 text-gray-500">Selecciona tu archivo de volcado de memoria (.raw)</p>
       </div>
 
-      <!-- Historial -->
-      <div class="tab-panel hidden" id="historyTab">
-        <div id="history" class="space-y-3"></div>
-      </div>
+      <!-- Paso 2: Simulación de análisis -->
+      <div class="bg-gray-50 rounded-lg p-4 shadow-md">
+        <h2 class="font-bold text-lg mb-2">Paso 2: Resultados del análisis</h2>
+        <div id="results" class="space-y-4">
 
-      <!-- PDFs -->
-      <div class="tab-panel hidden" id="pdfs">
-        <iframe src="https://example.com/documento.pdf" class="w-full h-[400px] rounded-lg border border-gray-300"></iframe>
-        <p class="text-sm text-gray-500 mt-2">PDF de ejemplo incrustado.</p>
-      </div>
+          <!-- Resultados de Procesos -->
+          <div class="hidden" id="procesos">
+            <h3 class="font-semibold text-blue-600">Procesos Detectados</h3>
+            <table class="w-full border border-gray-200 rounded">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="p-2 border">PID</th>
+                  <th class="p-2 border">Nombre</th>
+                  <th class="p-2 border">Usuario</th>
+                  <th class="p-2 border">Riesgo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-2 border">1234</td>
+                  <td class="p-2 border">cmd.exe</td>
+                  <td class="p-2 border">Juan</td>
+                  <td class="p-2 border text-red-600 font-bold">Alto</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-2 border">5678</td>
+                  <td class="p-2 border">explorer.exe</td>
+                  <td class="p-2 border">Ana</td>
+                  <td class="p-2 border text-green-600 font-bold">Bajo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-    </div>
+          <!-- Resultados de Conexiones de Red -->
+          <div class="hidden" id="red">
+            <h3 class="font-semibold text-blue-600">Conexiones de Red</h3>
+            <table class="w-full border border-gray-200 rounded">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="p-2 border">Proceso</th>
+                  <th class="p-2 border">IP Remota</th>
+                  <th class="p-2 border">Puerto</th>
+                  <th class="p-2 border">Riesgo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="hover:bg-gray-50">
+                  <td class="p-2 border">cmd.exe</td>
+                  <td class="p-2 border">192.168.1.100</td>
+                  <td class="p-2 border">443</td>
+                  <td class="p-2 border text-yellow-600 font-bold">Medio</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-  </div>
+          <!-- Resultados de Comandos -->
+          <div class="hidden" id="comandos">
+            <h3 class="font-semibold text-blue-600">Comandos Ejecutados</h3>
+            <ul class="list-disc pl-6">
+              <li>cmd.exe → ipconfig /all</li>
+              <li>PowerShell → Get-Process</li>
+            </ul>
+          </div>
 
-</div>
+          <!-- Resultados de Archivos -->
+          <div class="hidden" id="archivos">
+            <h3 class="font-semibold text-blue-600">Archivos en Memoria</h3>
+            <ul class="list-disc pl-6">
+              <li>C:\Temp\malware.exe → Riesgo Alto</li>
+              <li>C:\Users\Juan\Documents\nota.txt → Riesgo Bajo</li>
+            </ul>
+          </div>
 
-<script>
-const askBtn = document.getElementById('askBtn');
-const questionInput = document.getElementById('question');
-const chatBox = document.getElementById('chatBox');
-const fragList = document.getElementById('fragList');
-const historyEl = document.getElementById('history');
+          <!-- Resultados de IA / Anomalías -->
+          <div class="hidden" id="anomalias">
+            <h3 class="font-semibold text-blue-600">Anomalías Detectadas por IA</h3>
+            <ul class="list-disc pl-6">
+              <li>Proceso cmd.exe ejecutado en hora inusual → Riesgo Alto</li>
+              <li>Descarga de archivo sospechoso en memoria → Riesgo Medio</li>
+            </ul>
+          </div>
 
-const MOCK_FRAGMENTS = [
-  { source: "Millicom_Policies.pdf", page: 12, snippet: "Activar plan de respuesta ante incidentes y notificar a Compliance.", embScore: 0.89, tag:"Incidente" },
-  { source: "ISO27001.pdf", page: "A.18.1.3", snippet: "Documentar procedimientos de gestión y comunicación de incidentes.", embScore: 0.84, tag:"Control" },
-  { source: "NIST_CSF.pdf", page: "RS-1", snippet: "Coordinar la comunicación durante y después de un incidente.", embScore: 0.78, tag:"Política" }
-];
-
-const HISTORY = [];
-
-function getPriority(score){
-  if(score>=85) return {text:'Alta', color:'bg-red-500'};
-  if(score>=65) return {text:'Media', color:'bg-yellow-400'};
-  return {text:'Baja', color:'bg-green-400'};
-}
-
-function renderFragments(frags){
-  fragList.innerHTML = "";
-  frags.forEach(f=>{
-    const prio = getPriority(f.embScore*100);
-    const div = document.createElement('div');
-    div.className = "p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hover:shadow-md transition relative";
-    const color = f.tag==='Incidente'?'bg-red-500':f.tag==='Política'?'bg-blue-400':'bg-indigo-400';
-    div.innerHTML = `
-      <div class="flex items-center justify-between mb-1">
-        <div class="font-semibold text-gray-800">${f.source} • p.${f.page}</div>
-        <span class="tag ${color}">${f.tag}</span>
-      </div>
-      <div class="text-gray-700 mb-2">${f.snippet}</div>
-      <div class="flex items-center justify-between text-xs text-gray-500">
-        <span>Score: ${Math.round(f.embScore*100)}%</span>
-        <div class="flex gap-2">
-          <span class="tag ${prio.color}">${prio.text}</span>
-          <button class="copyBtn text-gray-400 hover:text-gray-800"><i class='bx bx-copy'></i></button>
         </div>
       </div>
-    `;
-    fragList.appendChild(div);
-    div.querySelector('.copyBtn').addEventListener('click',()=>navigator.clipboard.writeText(f.snippet));
-  });
-}
 
-function renderHistory(){
-  historyEl.innerHTML = "";
-  HISTORY.slice(0,6).forEach(h=>{
-    const prio = getPriority(h.conf);
-    const div = document.createElement('div');
-    div.className = "p-2 bg-gray-50 rounded flex items-center justify-between text-sm hover:shadow transition";
-    div.innerHTML = `<div>${h.q}<br><span class="text-xs text-gray-500">${h.tag}</span></div><div class="flex items-center gap-2"><span class="font-semibold">${h.conf}%</span><span class="tag ${prio.color}">${prio.text}</span></div>`;
-    historyEl.appendChild(div);
-  });
-}
+      <!-- Paso 3: Recomendaciones -->
+      <div class="bg-gray-50 rounded-lg p-4 shadow-md">
+        <h2 class="font-bold text-lg mb-2">Paso 3: Recomendaciones Automáticas</h2>
+        <ul class="list-disc pl-6 text-gray-700" id="recomendaciones">
+          <li>Revisar procesos con riesgo alto inmediatamente.</li>
+          <li>Verificar conexiones externas desconocidas.</li>
+          <li>Analizar archivos sospechosos con VirusTotal.</li>
+          <li>Notificar al SOC de actividad inusual.</li>
+        </ul>
+      </div>
 
-// Simulación de respuesta con varias etiquetas automáticas
-function simulateResponse(question){
-  const frags = MOCK_FRAGMENTS.slice().sort((a,b)=>b.embScore-a.embScore).slice(0,3);
-  const avgScore = Math.round((frags.reduce((s,f)=>s+f.embScore,0)/frags.length)*100);
+    </section>
 
-  // Etiquetas automáticas tipo IA
-  const autoTags = ['Incidente', 'Control', 'Riesgo', 'Política', 'Alta Prioridad'];
-  const selectedTags = autoTags.slice(0,3); // selecciona 3 por ejemplo
+  </main>
 
-  const recommendations = "Recomendación: Prioriza la contención rápida, notifica a Compliance, audita accesos y documenta evidencia. Evalúa criticidad y seguimiento.";
-
-  const botDiv = document.createElement('div');
-  botDiv.className = "bg-blue-100 p-3 rounded-xl max-w-[75%] shadow-sm text-gray-800";
-  botDiv.innerHTML = `<strong>Confianza:</strong> ${avgScore}%<br>
-  <div class="flex flex-wrap gap-1 my-1">${selectedTags.map(t=>`<span class="tag bg-blue-400">${t}</span>`).join('')}</div>
-  <div>${recommendations}</div>`;
-  chatBox.appendChild(botDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  HISTORY.unshift({q: question, tag: selectedTags.join(','), conf: avgScore});
-  renderHistory();
-  renderFragments(frags);
-}
-
-askBtn.addEventListener('click',()=>{
-  const q = questionInput.value.trim();
-  if(!q) return alert("Escribe tu pregunta.");
-  const userDiv = document.createElement('div');
-  userDiv.className = "bg-gray-100 p-3 rounded-xl max-w-[75%] ml-auto shadow text-gray-800";
-  userDiv.textContent = q;
-  chatBox.appendChild(userDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-  questionInput.value = '';
-  simulateResponse(q);
-});
-
-// Tabs funcionales
-document.querySelectorAll('.tab').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('tab-active'));
-    btn.classList.add('tab-active');
-    const tab = btn.getAttribute('data-tab');
-    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
-    if(tab==='fragments') document.getElementById('fragments').classList.remove('hidden');
-    if(tab==='history') document.getElementById('historyTab').classList.remove('hidden');
-    if(tab==='pdfs') document.getElementById('pdfs').classList.remove('hidden');
-  });
-});
-</script>
+  <!-- JavaScript para simulación -->
+  <script>
+    const analizarBtn = document.getElementById('analizarBtn');
+    analizarBtn.addEventListener('click', () => {
+      // Mostrar resultados simulados
+      document.getElementById('procesos').classList.remove('hidden');
+      document.getElementById('red').classList.remove('hidden');
+      document.getElementById('comandos').classList.remove('hidden');
+      document.getElementById('archivos').classList.remove('hidden');
+      document.getElementById('anomalias').classList.remove('hidden');
+      alert("Simulación completada: resultados cargados correctamente");
+    });
+  </script>
 
 </body>
 </html>
