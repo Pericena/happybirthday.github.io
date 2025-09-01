@@ -3,45 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulación Análisis de Memoria RAW</title>
+  <title>Dashboard Forense RAW & DMP</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Scroll para tablas grandes */
+    .table-container { max-height: 250px; overflow-y: auto; }
+  </style>
 </head>
 <body class="bg-white text-gray-800 font-sans">
 
   <!-- Header -->
   <header class="bg-blue-600 text-white p-4 shadow-md">
-    <h1 class="text-2xl font-bold">Dashboard Simulación Forense</h1>
-    <p class="text-sm">Análisis de memoria RAW - Pasos y recomendaciones</p>
+    <h1 class="text-2xl font-bold">Dashboard Forense de Memoria</h1>
+    <p class="text-sm">Simulación de análisis completo de archivos RAW y DMP</p>
   </header>
 
   <!-- Contenedor principal -->
   <main class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
 
-    <!-- Sidebar / Tags -->
+    <!-- Sidebar / filtros -->
     <aside class="md:col-span-1 bg-gray-100 rounded-lg p-4 shadow-inner">
-      <h2 class="font-bold text-lg mb-2">Áreas de Análisis</h2>
+      <h2 class="font-bold text-lg mb-2">Filtros y Tags</h2>
       <div class="flex flex-col space-y-2">
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Procesos
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Comandos
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Conexiones de Red
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Archivos en Memoria
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Usuarios
-        </label>
-        <label class="flex items-center">
-          <input type="checkbox" class="mr-2" checked> Anomalías IA
-        </label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Procesos</label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Conexiones de Red</label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Archivos</label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Comandos</label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Anomalías IA</label>
+        <label class="flex items-center"><input type="checkbox" class="mr-2" checked> Crash Logs</label>
       </div>
+
+      <h2 class="font-bold text-lg mt-4 mb-2">Filtrar por Usuario</h2>
+      <select id="usuarioFiltro" class="border border-gray-300 rounded p-2 w-full">
+        <option value="todos">Todos</option>
+        <option value="Juan">Juan</option>
+        <option value="Ana">Ana</option>
+      </select>
+
       <button id="analizarBtn" class="mt-4 bg-blue-600 text-white rounded p-2 hover:bg-blue-700 transition">
-        Analizar
+        Simular Análisis
       </button>
     </aside>
 
@@ -50,25 +50,26 @@
 
       <!-- Paso 1: Cargar archivo -->
       <div class="bg-gray-50 rounded-lg p-4 shadow-md">
-        <h2 class="font-bold text-lg mb-2">Paso 1: Cargar archivo RAW</h2>
+        <h2 class="font-bold text-lg mb-2">Paso 1: Cargar Archivo RAW o DMP</h2>
         <input type="file" id="fileInput" class="border border-gray-300 rounded p-2 w-full" />
-        <p class="text-sm mt-1 text-gray-500">Selecciona tu archivo de volcado de memoria (.raw)</p>
+        <p class="text-sm mt-1 text-gray-500">Selecciona tu archivo de volcado de memoria (.raw o .dmp)</p>
       </div>
 
-      <!-- Paso 2: Simulación de análisis -->
+      <!-- Paso 2: Resultados del análisis -->
       <div class="bg-gray-50 rounded-lg p-4 shadow-md">
-        <h2 class="font-bold text-lg mb-2">Paso 2: Resultados del análisis</h2>
-        <div id="results" class="space-y-4">
+        <h2 class="font-bold text-lg mb-2">Paso 2: Resultados del Análisis</h2>
 
-          <!-- Resultados de Procesos -->
-          <div class="hidden" id="procesos">
-            <h3 class="font-semibold text-blue-600">Procesos Detectados</h3>
-            <table class="w-full border border-gray-200 rounded">
-              <thead class="bg-gray-100">
+        <!-- Procesos -->
+        <div class="hidden" id="procesos">
+          <h3 class="font-semibold text-blue-600 mb-1">Procesos Detectados</h3>
+          <div class="table-container border rounded">
+            <table class="w-full table-auto border-collapse">
+              <thead class="bg-gray-100 sticky top-0">
                 <tr>
                   <th class="p-2 border">PID</th>
                   <th class="p-2 border">Nombre</th>
                   <th class="p-2 border">Usuario</th>
+                  <th class="p-2 border">Estado</th>
                   <th class="p-2 border">Riesgo</th>
                 </tr>
               </thead>
@@ -77,25 +78,30 @@
                   <td class="p-2 border">1234</td>
                   <td class="p-2 border">cmd.exe</td>
                   <td class="p-2 border">Juan</td>
+                  <td class="p-2 border">Activo</td>
                   <td class="p-2 border text-red-600 font-bold">Alto</td>
                 </tr>
                 <tr class="hover:bg-gray-50">
                   <td class="p-2 border">5678</td>
                   <td class="p-2 border">explorer.exe</td>
                   <td class="p-2 border">Ana</td>
+                  <td class="p-2 border">Terminado</td>
                   <td class="p-2 border text-green-600 font-bold">Bajo</td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
 
-          <!-- Resultados de Conexiones de Red -->
-          <div class="hidden" id="red">
-            <h3 class="font-semibold text-blue-600">Conexiones de Red</h3>
-            <table class="w-full border border-gray-200 rounded">
-              <thead class="bg-gray-100">
+        <!-- Conexiones de red -->
+        <div class="hidden mt-4" id="red">
+          <h3 class="font-semibold text-blue-600 mb-1">Conexiones de Red</h3>
+          <div class="table-container border rounded">
+            <table class="w-full table-auto border-collapse">
+              <thead class="bg-gray-100 sticky top-0">
                 <tr>
                   <th class="p-2 border">Proceso</th>
+                  <th class="p-2 border">Usuario</th>
                   <th class="p-2 border">IP Remota</th>
                   <th class="p-2 border">Puerto</th>
                   <th class="p-2 border">Riesgo</th>
@@ -104,6 +110,7 @@
               <tbody>
                 <tr class="hover:bg-gray-50">
                   <td class="p-2 border">cmd.exe</td>
+                  <td class="p-2 border">Juan</td>
                   <td class="p-2 border">192.168.1.100</td>
                   <td class="p-2 border">443</td>
                   <td class="p-2 border text-yellow-600 font-bold">Medio</td>
@@ -111,35 +118,44 @@
               </tbody>
             </table>
           </div>
-
-          <!-- Resultados de Comandos -->
-          <div class="hidden" id="comandos">
-            <h3 class="font-semibold text-blue-600">Comandos Ejecutados</h3>
-            <ul class="list-disc pl-6">
-              <li>cmd.exe → ipconfig /all</li>
-              <li>PowerShell → Get-Process</li>
-            </ul>
-          </div>
-
-          <!-- Resultados de Archivos -->
-          <div class="hidden" id="archivos">
-            <h3 class="font-semibold text-blue-600">Archivos en Memoria</h3>
-            <ul class="list-disc pl-6">
-              <li>C:\Temp\malware.exe → Riesgo Alto</li>
-              <li>C:\Users\Juan\Documents\nota.txt → Riesgo Bajo</li>
-            </ul>
-          </div>
-
-          <!-- Resultados de IA / Anomalías -->
-          <div class="hidden" id="anomalias">
-            <h3 class="font-semibold text-blue-600">Anomalías Detectadas por IA</h3>
-            <ul class="list-disc pl-6">
-              <li>Proceso cmd.exe ejecutado en hora inusual → Riesgo Alto</li>
-              <li>Descarga de archivo sospechoso en memoria → Riesgo Medio</li>
-            </ul>
-          </div>
-
         </div>
+
+        <!-- Archivos -->
+        <div class="hidden mt-4" id="archivos">
+          <h3 class="font-semibold text-blue-600 mb-1">Archivos en Memoria</h3>
+          <ul class="list-disc pl-6">
+            <li>C:\Temp\malware.exe → Usuario: Juan → Riesgo Alto</li>
+            <li>C:\Users\Ana\Documents\nota.txt → Usuario: Ana → Riesgo Bajo</li>
+          </ul>
+        </div>
+
+        <!-- Comandos -->
+        <div class="hidden mt-4" id="comandos">
+          <h3 class="font-semibold text-blue-600 mb-1">Comandos Ejecutados</h3>
+          <ul class="list-disc pl-6">
+            <li>cmd.exe → ipconfig /all (Usuario: Juan)</li>
+            <li>PowerShell → Get-Process (Usuario: Ana)</li>
+          </ul>
+        </div>
+
+        <!-- Anomalías IA -->
+        <div class="hidden mt-4" id="anomalias">
+          <h3 class="font-semibold text-blue-600 mb-1">Anomalías Detectadas por IA</h3>
+          <ul class="list-disc pl-6">
+            <li>Proceso cmd.exe ejecutado en hora inusual → Riesgo Alto</li>
+            <li>Descarga de archivo sospechoso en memoria → Riesgo Medio</li>
+          </ul>
+        </div>
+
+        <!-- Crash Logs -->
+        <div class="hidden mt-4" id="crash">
+          <h3 class="font-semibold text-blue-600 mb-1">Crash Logs</h3>
+          <ul class="list-disc pl-6">
+            <li>Aplicación explorer.exe terminó inesperadamente → Riesgo Medio</li>
+            <li>Windows Kernel reportó error → Riesgo Alto</li>
+          </ul>
+        </div>
+
       </div>
 
       <!-- Paso 3: Recomendaciones -->
@@ -150,6 +166,7 @@
           <li>Verificar conexiones externas desconocidas.</li>
           <li>Analizar archivos sospechosos con VirusTotal.</li>
           <li>Notificar al SOC de actividad inusual.</li>
+          <li>Revisar Crash Logs de alto riesgo para prevenir daños futuros.</li>
         </ul>
       </div>
 
@@ -161,13 +178,19 @@
   <script>
     const analizarBtn = document.getElementById('analizarBtn');
     analizarBtn.addEventListener('click', () => {
-      // Mostrar resultados simulados
-      document.getElementById('procesos').classList.remove('hidden');
-      document.getElementById('red').classList.remove('hidden');
-      document.getElementById('comandos').classList.remove('hidden');
-      document.getElementById('archivos').classList.remove('hidden');
-      document.getElementById('anomalias').classList.remove('hidden');
+      // Mostrar todas las secciones simuladas
+      ['procesos','red','archivos','comandos','anomalias','crash'].forEach(id => {
+        document.getElementById(id).classList.remove('hidden');
+      });
       alert("Simulación completada: resultados cargados correctamente");
+    });
+
+    // Filtro de usuario (simulado)
+    const usuarioFiltro = document.getElementById('usuarioFiltro');
+    usuarioFiltro.addEventListener('change', () => {
+      const usuario = usuarioFiltro.value;
+      // Simulación simple: alert
+      alert("Filtro aplicado: " + usuario);
     });
   </script>
 
