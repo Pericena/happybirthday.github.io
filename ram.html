@@ -1,1 +1,674 @@
 
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DFIR · Sistema de Volcado de Memoria</title>
+  <meta name="description" content="Dashboard de análisis de volcados de memoria con filtros, tags, simulación y AI/ML en el navegador.">
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0faff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e'
+            }
+          }
+        }
+      },
+      darkMode: 'class'
+    }
+  </script>
+  <!-- Chart.js for simple charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- TensorFlow.js for demo AI/ML -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.18.0/dist/tf.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 6px; }
+    ::-webkit-scrollbar-track { background: #e2e8f0; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+  <!-- Topbar -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/60 dark:border-slate-800/80 backdrop-blur bg-white/75 dark:bg-slate-900/60">
+    <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-2xl bg-brand-600 text-white grid place-items-center font-bold">DF</div>
+        <div>
+          <h1 class="text-xl font-semibold leading-tight">DFIR · Laboratorio de Volcados de Memoria</h1>
+          <p class="text-xs text-slate-500">Simulación + Filtros + Tags + IA/ML (client-side)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="themeToggle" class="px-3 py-1.5 rounded-xl border text-sm border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">🌗 Tema</button>
+        <a download id="exportBtn" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm">Exportar Selección</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="mx-auto max-w-7xl px-4 py-6 grid grid-cols-12 gap-6">
+    <!-- Sidebar filtros -->
+    <aside class="col-span-12 lg:col-span-3 space-y-6">
+      <section class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+        <h2 class="font-semibold mb-3">Ingesta</h2>
+        <div class="space-y-2">
+          <input id="fileInput" type="file" accept=".raw,.dmp,.bin" multiple class="block w-full text-sm file:mr-4 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
+          <button id="simulateBtn" class="w-full px-3 py-2 rounded-xl bg-slate-900 text-white text-sm hover:opacity-90">Simular 100 artefactos</button>
+        </div>
+        <p class="mt-2 text-xs text-slate-500">* La lectura real de binarios se simula para fines de demo.</p>
+      </section>
+
+      <section class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+        <h2 class="font-semibold mb-3">Filtros</h2>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs mb-1">Buscar</label>
+            <input id="q" type="text" placeholder="PID, proceso, cadena, host..." class="w-full rounded-xl border px-3 py-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-400" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs mb-1">Desde</label>
+              <input id="fromDate" type="datetime-local" class="w-full rounded-xl border px-3 py-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+            <div>
+              <label class="block text-xs mb-1">Hasta</label>
+              <input id="toDate" type="datetime-local" class="w-full rounded-xl border px-3 py-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs mb-1">Tipo de artefacto</label>
+            <select id="typeFilter" class="w-full rounded-xl border px-3 py-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <option value="">Todos</option>
+              <option>Strings sospechosas</option>
+              <option>PE/Secciones</option>
+              <option>Conexiones de red</option>
+              <option>Inyección de código</option>
+              <option>DLL sospechosa</option>
+              <option>Credenciales/Secrets</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs mb-1">Severidad mínima</label>
+            <input id="sevMin" type="range" min="0" max="100" step="1" value="0" class="w-full" />
+            <div class="text-xs text-slate-500">≥ <span id="sevValue">0</span></div>
+          </div>
+          <div>
+            <span class="block text-xs mb-1">Indicadores</span>
+            <label class="flex items-center gap-2"><input class="indc" type="checkbox" value="mimikatz"/> Mimikatz</label>
+            <label class="flex items-center gap-2"><input class="indc" type="checkbox" value="syscalls"/> Syscalls nativas</label>
+            <label class="flex items-center gap-2"><input class="indc" type="checkbox" value="base64"/> Cadenas base64</label>
+            <label class="flex items-center gap-2"><input class="indc" type="checkbox" value="pe"/> Encabezado PE</label>
+            <label class="flex items-center gap-2"><input class="indc" type="checkbox" value="net"/> Tráfico C2</label>
+          </div>
+          <div>
+            <label class="block text-xs mb-1">Tags</label>
+            <div id="tagInput" class="flex flex-wrap items-center gap-2 rounded-xl border px-2 py-2 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <input id="tagField" type="text" placeholder="+ Enter para añadir" class="flex-1 bg-transparent outline-none text-sm" />
+            </div>
+            <div class="mt-2 text-xs text-slate-500">Sugerencias: <span class="italic">C2, credenciales, lateral, exfil</span></div>
+          </div>
+          <div class="pt-2 flex gap-2">
+            <button id="applyFilters" class="flex-1 px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white">Aplicar</button>
+            <button id="clearFilters" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700">Limpiar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+        <h2 class="font-semibold mb-3">IA / ML</h2>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-2">Puntaje de anomalía en el navegador (demo):</p>
+        <div class="space-y-2 text-sm">
+          <label class="block text-xs">Umbral de alerta (<span id="threshVal">0.75</span>)</label>
+          <input id="thresh" type="range" min="0" max="1" step="0.01" value="0.75" class="w-full" />
+          <button id="trainBtn" class="w-full px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Entrenar (rápido)</button>
+          <p id="trainStatus" class="text-xs text-slate-500">Modelo inicializado.</p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Contenido principal -->
+    <section class="col-span-12 lg:col-span-9 space-y-6">
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <div class="text-xs text-slate-500">Artefactos</div>
+          <div id="kpiArtifacts" class="text-2xl font-semibold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <div class="text-xs text-slate-500">Alertas IA</div>
+          <div id="kpiAlerts" class="text-2xl font-semibold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <div class="text-xs text-slate-500">Hosts</div>
+          <div id="kpiHosts" class="text-2xl font-semibold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+          <div class="text-xs text-slate-500">Tags</div>
+          <div id="kpiTags" class="text-2xl font-semibold">0</div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+        <div class="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="text-sm text-slate-600 dark:text-slate-300">Resultados</div>
+          <div class="flex items-center gap-2 text-sm">
+            <label>Ordenar por</label>
+            <select id="sortBy" class="rounded-xl border px-2 py-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <option value="-score">Score ⬇︎</option>
+              <option value="score">Score ⬆︎</option>
+              <option value="-time">Tiempo ⬇︎</option>
+              <option value="time">Tiempo ⬆︎</option>
+            </select>
+          </div>
+        </div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+              <tr>
+                <th class="px-3 py-2 text-left">Tiempo</th>
+                <th class="px-3 py-2 text-left">Host</th>
+                <th class="px-3 py-2 text-left">PID</th>
+                <th class="px-3 py-2 text-left">Proceso</th>
+                <th class="px-3 py-2 text-left">Tipo</th>
+                <th class="px-3 py-2 text-left">Descripción</th>
+                <th class="px-3 py-2 text-left">Score</th>
+                <th class="px-3 py-2 text-left">Tags</th>
+                <th class="px-3 py-2 text-left">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+          </table>
+        </div>
+        <div class="p-3 flex items-center justify-between text-sm">
+          <div id="pagingInfo" class="text-slate-500">0–0 de 0</div>
+          <div class="flex items-center gap-2">
+            <select id="pageSize" class="rounded-xl border px-2 py-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <option>10</option>
+              <option>25</option>
+              <option>50</option>
+            </select>
+            <button id="prev" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700">Prev</button>
+            <button id="next" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de detalle -->
+      <div id="detailPanel" class="hidden p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-semibold">Detalle del artefacto</h3>
+            <p id="detailTitle" class="text-sm text-slate-500"></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="closeDetail" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700">Cerrar</button>
+            <button id="tagDetail" class="px-3 py-1.5 rounded-xl bg-brand-600 text-white">Añadir Tag</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <h4 class="font-medium mb-2">Hex (preview simulado)</h4>
+            <pre id="hexPreview" class="h-48 overflow-auto rounded-xl bg-slate-50 dark:bg-slate-900 p-3 text-xs"></pre>
+          </div>
+          <div>
+            <h4 class="font-medium mb-2">Strings</h4>
+            <div id="stringsList" class="h-48 overflow-auto rounded-xl bg-slate-50 dark:bg-slate-900 p-3 text-xs space-y-1"></div>
+          </div>
+          <div>
+            <h4 class="font-medium mb-2">Entropía</h4>
+            <canvas id="entropyChart" height="160"></canvas>
+          </div>
+          <div>
+            <h4 class="font-medium mb-2">Puntaje IA</h4>
+            <div id="aiScoreBox" class="p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div class="text-3xl font-semibold" id="aiScoreVal">0.00</div>
+              <div class="text-xs text-slate-500">Umbral actual: <span id="aiThreshVal">0.75</span></div>
+              <div id="aiBadge" class="inline-block mt-2 px-2 py-1 rounded-full text-xs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="mx-auto max-w-7xl px-4 pb-10 text-xs text-slate-500">
+    Hecho para demo educativa DFIR. Frontend puro: HTML + JS + Tailwind + Chart.js + TensorFlow.js.
+  </footer>
+
+  <script>
+    // ======= Estado global =======
+    const state = {
+      raw: [],         // todos los artefactos
+      view: [],        // artefactos filtrados/ordenados
+      page: 0,
+      pageSize: 10,
+      selected: new Set(),
+      tagsUniverse: new Set(),
+      filters: {
+        q: '',
+        from: null,
+        to: null,
+        type: '',
+        sevMin: 0,
+        indicators: new Set(),
+        tags: new Set(),
+        thresh: 0.75
+      },
+      model: null
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    // ======= Utilidades =======
+    function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function choice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+    function formatDate(d){ return new Date(d).toLocaleString(); }
+    function uid(){ return crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2)); }
+
+    function entropyStr(s){
+      // entropía Shannon simple
+      const freq = {};
+      for (const ch of s) freq[ch] = (freq[ch]||0)+1;
+      const len = s.length || 1;
+      let H = 0;
+      for (const c in freq){ const p = freq[c]/len; H -= p * Math.log2(p); }
+      // normalizar 0..1 suponiendo alfabeto ~64
+      return Math.min(1, H/6);
+    }
+
+    function genHex(len=256){
+      let out = '';
+      for(let i=0;i<len;i++){
+        const b = randInt(0,255).toString(16).padStart(2,'0');
+        out += b + ( (i%16===15) ? '\n' : ' ');
+      }
+      return out;
+    }
+
+    function genStrings(){
+      const pool = [
+        'LoadLibraryA','GetProcAddress','VirtualAlloc','NtCreateThreadEx','Invoke-Expression','Mimikatz','sekurlsa::logonpasswords',
+        'AAAAA==','QzJfQ29tbWFuZA==','cmd.exe /c whoami','rundll32','powershell -enc','CryptProtectData','http://c2.example.net:8080',
+        'svchost.exe','lsass.exe','explorer.exe','winlogon.exe','127.0.0.1:4444','POST /beacon','token=','password=', 'api_key=', 'bearer '
+      ];
+      const arr = [];
+      const n = randInt(5,18);
+      for(let i=0;i<n;i++) arr.push(choice(pool));
+      return arr;
+    }
+
+    function hasIndicator(strings, ind){
+      const s = strings.join(' ').toLowerCase();
+      const map = {
+        mimikatz: /mimikatz|sekurlsa/,
+        syscalls: /ntcreate|ntopen|zw/,
+        base64: /==\b|[A-Za-z0-9+/]{16,}=/,
+        pe: /LoadLibrary|GetProcAddress|IMAGE_DOS_HEADER|MZ/,
+        net: /http:\/\/|https:\/\/|beacon|POST\s|127\.0\.0\.1:\d{2,5}/
+      };
+      return map[ind].test(s);
+    }
+
+    function aiFeatures(artifact){
+      const s = artifact.strings.join(' ');
+      return [
+        artifact.severity/100,                        // 0
+        entropyStr(s),                                // 1
+        hasIndicator(artifact.strings,'mimikatz')?1:0,// 2
+        hasIndicator(artifact.strings,'syscalls')?1:0,// 3
+        hasIndicator(artifact.strings,'base64')?1:0,  // 4
+        hasIndicator(artifact.strings,'pe')?1:0,      // 5
+        hasIndicator(artifact.strings,'net')?1:0,     // 6
+        Math.min(1, s.length/400)                     // 7: tamaño
+      ];
+    }
+
+    function aiHeuristicScore(artifact){
+      // Fallback: combinación ponderada simple
+      const f = aiFeatures(artifact);
+      const w = [0.35,0.15,0.12,0.1,0.08,0.1,0.1,0.0];
+      let z = 0; for(let i=0;i<f.length;i++) z += f[i]*w[i];
+      return Math.max(0, Math.min(1, z));
+    }
+
+    async function initModel(){
+      // Pequeño perceptrón 8->8->1 para demo
+      const model = tf.sequential();
+      model.add(tf.layers.dense({units:8, inputShape:[8], activation:'relu'}));
+      model.add(tf.layers.dense({units:1, activation:'sigmoid'}));
+      model.compile({optimizer: tf.train.adam(0.03), loss: 'binaryCrossentropy'});
+      state.model = model;
+    }
+
+    async function trainTiny(){
+      if(!state.model) await initModel();
+      // Datos sintéticos: combinamos heurística + ruido
+      const X = [], y = [];
+      for(let i=0;i<512;i++){
+        const art = createArtifact();
+        const f = aiFeatures(art);
+        X.push(f);
+        const label = aiHeuristicScore(art) > 0.6 ? 1 : 0;
+        y.push(label);
+      }
+      const xs = tf.tensor2d(X);
+      const ys = tf.tensor2d(y, [y.length,1]);
+      $('#trainStatus').textContent = 'Entrenando…';
+      await state.model.fit(xs, ys, {epochs: 8, batchSize: 32, verbose: 0});
+      xs.dispose(); ys.dispose();
+      $('#trainStatus').textContent = 'Modelo listo (demo).';
+    }
+
+    function aiPredict(artifact){
+      if(state.model){
+        const t = tf.tensor2d([aiFeatures(artifact)]);
+        const p = state.model.predict(t).dataSync()[0];
+        t.dispose();
+        return p;
+      }
+      return aiHeuristicScore(artifact);
+    }
+
+    // ======= Datos simulados =======
+    const TYPES = ['Strings sospechosas','PE/Secciones','Conexiones de red','Inyección de código','DLL sospechosa','Credenciales/Secrets'];
+    const PROCS = ['svchost.exe','chrome.exe','powershell.exe','winlogon.exe','lsass.exe','explorer.exe','python.exe','cmd.exe'];
+    const HOSTS = ['MEGAPET-SRV','LAB-DFIR-01','UAGRM-LAB','SCZ-RED-12','BLUE-TEAM-03'];
+
+    function createArtifact(){
+      const strings = genStrings();
+      const sev = randInt(0,100);
+      const type = choice(TYPES);
+      const host = choice(HOSTS);
+      const proc = choice(PROCS);
+      const pid = randInt(300, 18000);
+      const t = Date.now() - randInt(0, 1000*60*60*24*7); // última semana
+      const id = uid();
+      const tags = new Set();
+      const hex = genHex(256);
+      const score = aiHeuristicScore({strings, severity: sev});
+      return { id, time: t, host, pid, process: proc, type, severity: sev, strings, hex, score, tags };
+    }
+
+    function simulate(n=100){
+      const arr = Array.from({length:n}, createArtifact);
+      state.raw.push(...arr);
+      refreshTagsUniverse();
+      applyAll();
+    }
+
+    // ======= Render =======
+    function refreshTagsUniverse(){
+      // recalcular universo tags a partir de state.raw
+      state.tagsUniverse = new Set();
+      state.raw.forEach(a => a.tags.forEach(t => state.tagsUniverse.add(t)));
+      $('#kpiTags').textContent = state.tagsUniverse.size;
+    }
+
+    function applyAll(){
+      // filtros
+      const q = state.filters.q.toLowerCase();
+      const from = state.filters.from ? new Date(state.filters.from).getTime() : -Infinity;
+      const to = state.filters.to ? new Date(state.filters.to).getTime() : Infinity;
+      const type = state.filters.type;
+      const sevMin = state.filters.sevMin;
+      const inds = state.filters.indicators;
+      const tagset = state.filters.tags;
+
+      let list = state.raw.filter(a =>
+        (!q || `${a.host} ${a.process} ${a.type} ${a.pid} ${a.strings.join(' ')}`.toLowerCase().includes(q)) &&
+        (a.time >= from && a.time <= to) &&
+        (!type || a.type === type) &&
+        (a.severity >= sevMin) &&
+        ([...inds].every(ind => hasIndicator(a.strings, ind))) &&
+        ([...tagset].every(t => a.tags.has(t)))
+      );
+
+      // recalcular score IA y banderas de alerta
+      let alerts = 0;
+      list = list.map(a => ({...a, score: aiPredict(a)}));
+      alerts = list.filter(a => a.score >= state.filters.thresh).length;
+
+      // ordenar
+      const sortSel = $('#sortBy').value;
+      const dir = sortSel.startsWith('-') ? -1 : 1;
+      const key = sortSel.replace('-', '');
+      list.sort((a,b)=>{
+        if(key==='score') return (a.score-b.score)*dir;
+        if(key==='time') return (a.time-b.time)*dir;
+        return 0;
+      }).reverse();
+
+      state.view = list;
+      state.page = 0;
+
+      // KPIs
+      $('#kpiArtifacts').textContent = state.raw.length;
+      $('#kpiAlerts').textContent = alerts;
+      $('#kpiHosts').textContent = new Set(state.raw.map(a=>a.host)).size;
+
+      renderTable();
+    }
+
+    function renderTable(){
+      const tbody = $('#tbody');
+      tbody.innerHTML = '';
+      const start = state.page * state.pageSize;
+      const end = Math.min(start + state.pageSize, state.view.length);
+      $('#pagingInfo').textContent = `${state.view.length? start+1:0}–${end} de ${state.view.length}`;
+
+      for(let i=start;i<end;i++){
+        const a = state.view[i];
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/60 dark:hover:bg-slate-900/40';
+        tr.innerHTML = `
+          <td class="px-3 py-2 whitespace-nowrap">${formatDate(a.time)}</td>
+          <td class="px-3 py-2">${a.host}</td>
+          <td class="px-3 py-2">${a.pid}</td>
+          <td class="px-3 py-2">${a.process}</td>
+          <td class="px-3 py-2">${a.type}</td>
+          <td class="px-3 py-2 max-w-[380px] truncate" title="${a.strings.join(' ')}">${a.strings.slice(0,3).join(' • ')}</td>
+          <td class="px-3 py-2">
+            <span class="px-2 py-1 rounded-full text-xs ${a.score>=state.filters.thresh?'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300':'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'}">${a.score.toFixed(2)}</span>
+          </td>
+          <td class="px-3 py-2">
+            ${(a.tags.size? [...a.tags].map(t=>`<span class='inline-block mr-1 mb-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs'>${t}</span>`).join('') : '<span class="text-slate-400">—</span>')}
+          </td>
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-2">
+              <button data-id="${a.id}" class="view px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-xs">Ver</button>
+              <button data-id="${a.id}" class="tag px-2 py-1 rounded-lg bg-brand-600 text-white text-xs">Tag</button>
+              <button data-id="${a.id}" class="sel px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-xs">Sel</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // acciones fila
+      $$('#tbody .view').forEach(btn=> btn.addEventListener('click', ()=> openDetail(btn.dataset.id)));
+      $$('#tbody .tag').forEach(btn=> btn.addEventListener('click', ()=> promptTag(btn.dataset.id)));
+      $$('#tbody .sel').forEach(btn=> btn.addEventListener('click', ()=> toggleSelect(btn.dataset.id)));
+    }
+
+    function toggleSelect(id){
+      if(state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
+      // construir blob exportable
+      const selected = state.raw.filter(a=>state.selected.has(a.id));
+      const data = selected.map(a=>({...a, tags:[...a.tags]}));
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      $('#exportBtn').href = url;
+      $('#exportBtn').download = `dfir_export_${selected.length}.json`;
+    }
+
+    // ======= Detalle =======
+    let entropyChart;
+    function openDetail(id){
+      const a = state.raw.find(x=>x.id===id);
+      if(!a) return;
+      $('#detailPanel').classList.remove('hidden');
+      $('#detailTitle').textContent = `${a.host} · ${a.process} (${a.pid}) · ${a.type}`;
+      $('#hexPreview').textContent = a.hex;
+      $('#stringsList').innerHTML = a.strings.map(s=>`<div>${s}</div>`).join('');
+      const ai = aiPredict(a);
+      $('#aiScoreVal').textContent = ai.toFixed(2);
+      $('#aiThreshVal').textContent = state.filters.thresh.toFixed(2);
+      const badge = $('#aiBadge');
+      if(ai >= state.filters.thresh){
+        badge.className = 'inline-block mt-2 px-2 py-1 rounded-full text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+        badge.textContent = 'Alerta';
+      } else {
+        badge.className = 'inline-block mt-2 px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+        badge.textContent = 'Normal';
+      }
+      // Entropía: generar 32 ventanas falsas
+      const windows = Array.from({length:32}, ()=> Math.random()*0.5 + (a.strings.some(s=>/==|enc|token=|password=/.test(s))?0.25:0));
+      drawEntropy(windows);
+      // permitir tag desde detalle
+      $('#tagDetail').onclick = ()=> promptTag(id);
+    }
+
+    function drawEntropy(values){
+      const ctx = $('#entropyChart').getContext('2d');
+      if(entropyChart) entropyChart.destroy();
+      entropyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: values.map((_,i)=> i+1),
+          datasets: [{ label:'Entropía (0-1)', data: values }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { suggestedMin: 0, suggestedMax: 1 }}}
+      });
+    }
+
+    function promptTag(id){
+      const tag = prompt('Añadir tag (ej. C2, credenciales, lateral, exfil):');
+      if(!tag) return;
+      const a = state.raw.find(x=>x.id===id);
+      a.tags.add(tag);
+      state.tagsUniverse.add(tag);
+      applyAll();
+    }
+
+    // ======= UI Tags input =======
+    function renderSelectedTags(){
+      const box = $('#tagInput');
+      // limpiar chips previos (mantener input)
+      box.querySelectorAll('.chip').forEach(n=>n.remove());
+      [...state.filters.tags].forEach(tag=>{
+        const chip = document.createElement('span');
+        chip.className = 'chip inline-flex items-center gap-1 mr-1 mb-1 px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 text-xs';
+        chip.innerHTML = `${tag}<button class="ml-1" title="Quitar">✕</button>`;
+        chip.querySelector('button').onclick = ()=> { state.filters.tags.delete(tag); renderSelectedTags(); };
+        box.insertBefore(chip, $('#tagField'));
+      });
+      $('#kpiTags').textContent = state.tagsUniverse.size;
+    }
+
+    // ======= Eventos =======
+    $('#simulateBtn').addEventListener('click', ()=> simulate(100));
+    $('#applyFilters').addEventListener('click', ()=> { state.page=0; applyAll(); });
+    $('#clearFilters').addEventListener('click', ()=> {
+      state.filters = { q:'', from:null, to:null, type:'', sevMin:0, indicators:new Set(), tags:new Set(), thresh: state.filters.thresh };
+      $('#q').value = ''; $('#fromDate').value=''; $('#toDate').value=''; $('#typeFilter').value=''; $('#sevMin').value=0; $('#sevValue').textContent = '0';
+      $$('.indc').forEach(i=> i.checked=false);
+      renderSelectedTags();
+      applyAll();
+    });
+
+    $('#q').addEventListener('input', e=> state.filters.q = e.target.value);
+    $('#fromDate').addEventListener('change', e=> state.filters.from = e.target.value || null);
+    $('#toDate').addEventListener('change', e=> state.filters.to = e.target.value || null);
+    $('#typeFilter').addEventListener('change', e=> state.filters.type = e.target.value);
+    $('#sevMin').addEventListener('input', e=> { state.filters.sevMin = +e.target.value; $('#sevValue').textContent = e.target.value; });
+    $$('.indc').forEach(i=> i.addEventListener('change', e=> {
+      if(e.target.checked) state.filters.indicators.add(e.target.value); else state.filters.indicators.delete(e.target.value);
+    }));
+    $('#sortBy').addEventListener('change', applyAll);
+
+    $('#pageSize').addEventListener('change', e=> { state.pageSize = +e.target.value; renderTable(); });
+    $('#prev').addEventListener('click', ()=> { if(state.page>0){ state.page--; renderTable(); }});
+    $('#next').addEventListener('click', ()=> { if((state.page+1)*state.pageSize < state.view.length){ state.page++; renderTable(); }});
+
+    // Tag input
+    $('#tagField').addEventListener('keydown', e=> {
+      if(e.key==='Enter' && e.target.value.trim()){
+        state.filters.tags.add(e.target.value.trim());
+        e.target.value='';
+        renderSelectedTags();
+      }
+    });
+
+    // Export vacío por defecto
+    toggleSelect('__none__');
+
+    // Tema oscuro
+    const themeBtn = $('#themeToggle');
+    function applyTheme(){
+      if(localStorage.getItem('dfir-theme')==='dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+    themeBtn.addEventListener('click', ()=>{
+      const cur = localStorage.getItem('dfir-theme');
+      localStorage.setItem('dfir-theme', cur==='dark' ? 'light' : 'dark');
+      applyTheme();
+    });
+    applyTheme();
+
+    // Umbral IA
+    $('#thresh').addEventListener('input', e=> {
+      state.filters.thresh = +e.target.value; $('#threshVal').textContent = (+e.target.value).toFixed(2); applyAll();
+    });
+
+    // Entrenamiento demo
+    $('#trainBtn').addEventListener('click', trainTiny);
+
+    // Carga de archivos (demo): crear artefactos sintéticos por archivo
+    $('#fileInput').addEventListener('change', async (e)=>{
+      const files = Array.from(e.target.files||[]);
+      // En una implementación real, aquí leeríamos binarios, volcados, etc.
+      // Para esta demo, cada archivo genera 50 artefactos con host=nombre
+      for(const f of files){
+        const host = f.name.replace(/\.[^.]+$/, '').toUpperCase();
+        const items = Array.from({length:50}, ()=> ({...createArtifact(), host}));
+        state.raw.push(...items);
+      }
+      refreshTagsUniverse();
+      applyAll();
+    });
+
+    // Inicializar
+    (async function(){
+      await initModel();
+      simulate(20); // arranque con algunos datos
+      renderSelectedTags();
+    })();
+
+    // Cerrar detalle
+    $('#closeDetail').addEventListener('click', ()=> $('#detailPanel').classList.add('hidden'));
+  </script>
+</body>
+</html>
